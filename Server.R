@@ -1,5 +1,37 @@
 
 # Define Server
+
+download_handler <- downloadHandler(
+  filename = function() {
+    paste("analysis-report-", Sys.Date(), ".html", sep = "")
+  },
+  content = function(file) {
+    # Create a simple HTML report
+    report_content <- paste0(
+      "<html><head><title>", input$reportTitle, "</title></head><body>",
+      "<h1>", input$reportTitle, "</h1>",
+      "<p>Generated on: ", Sys.Date(), "</p>",
+      "<h2>Data Summary</h2>",
+      "<p>This report was generated using R Shiny.</p>",
+      "</body></html>"
+    )
+    writeLines(report_content, file)
+  }
+)
+
+input_file_handler <- function(input, values) {
+  req(input$file)
+  
+  ext <- tools::file_ext(input$file$datapath)
+  
+  if(ext == "csv") {
+    values$data <- read_csv(input$file$datapath, 
+                            locale = locale(encoding = "UTF-8"))
+  } else if(ext %in% c("xlsx", "xls")) {
+    values$data <- read_excel(input$file$datapath)
+  }
+}
+
 server <- function(input, output, session) {
   # Reactive values to store data
   values <- reactiveValues(
@@ -9,18 +41,7 @@ server <- function(input, output, session) {
   )
   
   # Load Data Tab Logic
-  observeEvent(input$file, {
-    req(input$file)
-    
-    ext <- tools::file_ext(input$file$datapath)
-    
-    if(ext == "csv") {
-      values$data <- read_csv(input$file$datapath, 
-                              locale = locale(encoding = "UTF-8"))
-    } else if(ext %in% c("xlsx", "xls")) {
-      values$data <- read_excel(input$file$datapath)
-    }
-  })
+  observeEvent(input$file, input_file_handler(input, values))
   
   # Load sample data
   observeEvent(input$loadSample, {
@@ -245,21 +266,5 @@ server <- function(input, output, session) {
     }
   )
   
-  output$downloadReport <- downloadHandler(
-    filename = function() {
-      paste("analysis-report-", Sys.Date(), ".html", sep = "")
-    },
-    content = function(file) {
-      # Create a simple HTML report
-      report_content <- paste0(
-        "<html><head><title>", input$reportTitle, "</title></head><body>",
-        "<h1>", input$reportTitle, "</h1>",
-        "<p>Generated on: ", Sys.Date(), "</p>",
-        "<h2>Data Summary</h2>",
-        "<p>This report was generated using R Shiny.</p>",
-        "</body></html>"
-      )
-      writeLines(report_content, file)
-    }
-  )
+  output$downloadReport <- download_handler
 }

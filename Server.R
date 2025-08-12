@@ -19,7 +19,8 @@ download_handler <- downloadHandler(
   }
 )
 
-input_file_handler <- function(input, values) {
+input_file_handler <- function(input, values) 
+{
   req(input$file)
   
   ext <- tools::file_ext(input$file$datapath)
@@ -30,6 +31,13 @@ input_file_handler <- function(input, values) {
   } else if(ext %in% c("xlsx", "xls")) {
     values$data <- read_excel(input$file$datapath)
   }
+}
+
+sample_data_load_handler <- function(values) 
+{
+  values$data <- mtcars
+  values$data$car_name <- rownames(mtcars)
+  rownames(values$data) <- NULL
 }
 
 server <- function(input, output, session) {
@@ -44,11 +52,7 @@ server <- function(input, output, session) {
   observeEvent(input$file, input_file_handler(input, values))
   
   # Load sample data
-  observeEvent(input$loadSample, {
-    values$data <- mtcars
-    values$data$car_name <- rownames(mtcars)
-    rownames(values$data) <- NULL
-  })
+  observeEvent(input$loadSample, sample_data_load_handler(values))
   
   # Data table output
   output$dataTable <- renderDT({

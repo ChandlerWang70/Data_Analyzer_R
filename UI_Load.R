@@ -1,4 +1,4 @@
-tab_load <-      tabItem(tabName = "load",  fluidRow(
+tab_load <- tabItem(tabName = "load",  fluidRow(
     box(
       title = "Data Upload", status = "primary", solidHeader = TRUE, width = 12,
       fileInput("file", "Choose CSV/Excel File",

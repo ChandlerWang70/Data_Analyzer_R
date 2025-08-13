@@ -1,32 +1,48 @@
 # Define Server Handlers
 
 # Download Handlers
-download_handler <- downloadHandler(
-  filename = function() {
-    paste("analysis-report-", Sys.Date(), ".html", sep = "")
-  },
-  content = function(file) {
-    # Create a simple HTML report
-    report_content <- paste0(
-      "<html><head><title>", input$reportTitle, "</title></head><body>",
-      "<h1>", input$reportTitle, "</h1>",
-      "<p>Generated on: ", Sys.Date(), "</p>",
-      "<h2>Data Summary</h2>",
-      "<p>This report was generated using R Shiny.</p>",
-      "</body></html>"
-    )
-    writeLines(report_content, file)
-  }
-)
+download_report_handler <- function(input) {
+  
+  downloadHandler(
+    filename = function() {
+      paste("analysis-report-", Sys.Date(), ".html", sep = "")
+    },
+    content = function(file) {
+      # Create a simple HTML report
+      report_content <- paste0(
+        "<html><head><title>", input$reportTitle, "</title></head><body>",
+        "<h1>", input$reportTitle, "</h1>",
+        "<p>Generated on: ", Sys.Date(), "</p>",
+        "<h2>Data Summary</h2>",
+        "<p>This report was generated using R Shiny.</p>",
+        "</body></html>"
+      )
+      writeLines(report_content, file)
+    }
+  )
+}
 
-download_data_handler <- downloadHandler(
-  filename = function() {
-    paste("data-export-", Sys.Date(), ".csv", sep = "")
-  },
-  content = function(file) {
-    write.csv(values$data, file, row.names = FALSE)
-  }
-)
+download_data_handler <- function(values)
+{
+  
+  downloadHandler(
+    filename = function() {
+      paste("edited_data_", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(values$data, file, row.names = FALSE)
+    }
+  )
+  
+  # downloadHandler(
+  #   filename = function() {
+  #     paste("data-export-", Sys.Date(), ".csv", sep = "")
+  #   },
+  #   content = function(file) {
+  #     write.csv(values$data, file, row.names = FALSE)
+  #   }
+  # )
+}
 
 # Data Loading Handlers
 input_file_handler <- function(input, values) {
@@ -48,10 +64,66 @@ sample_data_load_handler <- function(values) {
   rownames(values$data) <- NULL
 }
 
+# Data Table Edit Handler
+data_table_edit_handler <- function(values, input)
+{
+  info <- input$dataTable_cell_edit
+  str(info)  # For debugging - remove in production
+  
+  # Update the data
+  values$data[info$row, info$col] <- info$value
+  
+  # Show a notification when cell is edited
+  showNotification(
+    paste("Cell updated: Row", info$row, "Column", info$col, "New value:", info$value),
+    type = "message",
+    duration = 2
+  )
+}
+
 # Data Display Handlers
 data_table_output_handler <- function(values) {
   req(values$data)
-  datatable(values$data, options = list(scrollX = TRUE, pageLength = 10))
+  
+  datatable(
+    values$data,
+    filter = 'top',
+    editable = list(
+      target = 'cell',
+      # Specify which columns are editable (optional)
+      disable = list(columns = 0)  # Disable editing for column 1(0-indexed)
+    ),
+    options = list(
+      pageLength = 25,
+      scrollX = TRUE,
+      dom = 'Bfrtip',
+      buttons = c('copy', 'csv', 'excel'),
+      # Highlight edited cells
+      rowCallback = JS(
+        "function(row, data, index) {",
+        "if ($(row).hasClass('edited')) {",
+        "$(row).css('background-color', '#ffffcc');",
+        "}",
+        "}"
+      )
+    ),
+    class = 'cell-border stripe hover'
+  )
+  
+  
+  # datatable(
+  #   values$data,
+  #   filter = 'top',  # Add search boxes at the top of each column
+  #   options = list(
+  #     pageLength = 25,
+  #     scrollX = TRUE,
+  #     dom = 'Bfrtip',
+  #     buttons = c('copy', 'csv', 'excel')
+  #   ),
+  #   class = 'cell-border stripe hover'
+  # )
+  
+  # datatable(values$data, options = list(scrollX = TRUE, pageLength = 10))
 }
 
 data_summary_handler <- function(values) {
@@ -255,6 +327,9 @@ server <- function(input, output, session) {
   observeEvent(input$file, input_file_handler(input, values))
   observeEvent(input$loadSample, sample_data_load_handler(values))
   
+  # Handle cell edits
+  observeEvent(input$dataTable_cell_edit, data_table_edit_handler(values, input))
+  
   # Data Display Outputs
   output$dataTable <- renderDT(data_table_output_handler(values))
   output$dataSummary <- renderPrint(data_summary_handler(values))
@@ -288,6 +363,6 @@ server <- function(input, output, session) {
   })
   
   # Download Handlers
-  output$downloadData <- download_data_handler
-  output$downloadReport <- download_handler
+  output$downloadData <- download_data_handler(values)
+  output$downloadReport <- download_report_handler(input)
 }

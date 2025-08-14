@@ -90,15 +90,26 @@ data_table_output_handler <- function(values) {
     filter = 'top',
     editable = list(
       target = 'cell',
-      # Specify which columns are editable (optional)
-      disable = list(columns = 0)  # Disable editing for column 1(0-indexed)
+      disable = list(columns = 0)
     ),
+    extensions = c('Buttons', 'ColReorder', 'FixedColumns'),
     options = list(
       pageLength = 25,
       scrollX = TRUE,
+      scrollY = "400px", # Optional: fixed height with vertical scroll
       dom = 'Bfrtip',
       buttons = c('copy', 'csv', 'excel'),
-      # Highlight edited cells
+      
+      # Column resizing and reordering
+      colReorder = TRUE,
+      autoWidth = TRUE,
+      
+      # Optional: responsive design
+      responsive = TRUE,
+      
+      # Optional: fix first column while scrolling
+      fixedColumns = list(leftColumns = 1),
+      
       rowCallback = JS(
         "function(row, data, index) {",
         "if ($(row).hasClass('edited')) {",
@@ -109,21 +120,6 @@ data_table_output_handler <- function(values) {
     ),
     class = 'cell-border stripe hover'
   )
-  
-  
-  # datatable(
-  #   values$data,
-  #   filter = 'top',  # Add search boxes at the top of each column
-  #   options = list(
-  #     pageLength = 25,
-  #     scrollX = TRUE,
-  #     dom = 'Bfrtip',
-  #     buttons = c('copy', 'csv', 'excel')
-  #   ),
-  #   class = 'cell-border stripe hover'
-  # )
-  
-  # datatable(values$data, options = list(scrollX = TRUE, pageLength = 10))
 }
 
 data_summary_handler <- function(values) {
@@ -313,6 +309,7 @@ report_preview_handler <- function(input, values) {
     } else ""
   ))
 }
+
 
 # Main Server Function
 server <- function(input, output, session) {

@@ -27,9 +27,9 @@ tab_report <- tabItem(tabName = "report",
     box(
       title = "Export Options", status = "warning", solidHeader = TRUE, width = 12,
       h4("Available Export Formats:"),
-      p("• HTML Report (recommended)"),
-      p("• PDF Report"),
-      p("• Word Document"),
+      # p("• HTML Report (recommended)"),
+      # p("• PDF Report"),
+      # p("• Word Document"),
       p("• CSV Data Export"),
       br(),
       downloadButton("downloadData", "Download Data as CSV", class = "btn-secondary")

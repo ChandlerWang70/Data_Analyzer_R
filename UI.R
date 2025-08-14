@@ -1,9 +1,11 @@
+source("UI_Header_Image.R")
 source("UI_Load.R")
 source("UI_Visualize.R")
 source("UI_Analyze.R")
 source("UI_Report.R")
 
 # Define UI
+
 
 ui <- dashboardPage(
   dashboardHeader(title = "Data Analysis Dashboard"),
@@ -18,6 +20,7 @@ ui <- dashboardPage(
   ),
   
   dashboardBody(
+    header_image,
     tabItems(
       # Load Data Tab
       tab_load,
